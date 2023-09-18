@@ -4,10 +4,8 @@ import os
 
 application = Flask(__name__)
 
-# Directorio donde se almacenan las aplicaciones
-CARPETA_APLICACIONES = 'uploads'
-RUTA_API = 'https://127.0.0.1:5000'
-IMAGEN_IOS = "ios.jpg"
+REPOSITORY_PATH = 'https://appdistribution.s3.amazonaws.com'
+DEF_IOS_IMG = "ios.jpg"
 
 
 @application.route('/')
@@ -17,13 +15,12 @@ def hello_world():
 
 @application.route('/metadata', methods=['GET'])
 def get_metadata():
-    # Generar un UUID para la carpeta única
-    carpeta_uuid = str(uuid.uuid4())
-    app_url = os.path.join(RUTA_API, CARPETA_APLICACIONES, carpeta_uuid)
-    image_url = os.path.join(RUTA_API, CARPETA_APLICACIONES, IMAGEN_IOS)
+    bucket_uuid = str(uuid.uuid4())
+    app_url = os.path.join(REPOSITORY_PATH, bucket_uuid)
+    image_url = os.path.join(REPOSITORY_PATH, DEF_IOS_IMG)
 
     return jsonify({
-        "appId": carpeta_uuid,
+        "appId": bucket_uuid,
         "appUrl": app_url,
         "imageUrl": image_url
     })
