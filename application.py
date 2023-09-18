@@ -70,5 +70,5 @@ def upload_file():
         return jsonify({"mensaje": response})
 
 
-if __name__ == '__main__':
-    application.run(debug=True)
+# if __name__ == '__main__':
+#     application.run(debug=True)
