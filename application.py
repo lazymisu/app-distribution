@@ -51,13 +51,13 @@ def upload_file():
             print(f"Archivo {filename} subido exitosamente a {object_url}")
 
         # Guardar en la base de datos (SQLite)
-        conn = sqlite3.connect('appdistribution.db')
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO apps (name, version, url) VALUES (?, ?, ?)",
-                       (appName, appVersion, object_url))
-        conn.commit()
-        conn.close()
-        print("Se guardo en base de datos!!!")
+        # conn = sqlite3.connect('appdistribution.db')
+        # cursor = conn.cursor()
+        # cursor.execute("INSERT INTO apps (name, version, url) VALUES (?, ?, ?)",
+        #                (appName, appVersion, object_url))
+        # conn.commit()
+        # conn.close()
+        # print("Se guardo en base de datos!!!")
 
         return jsonify({"mensaje": object_url})
 
