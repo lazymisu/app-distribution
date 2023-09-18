@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Distribution</title>
+</head>
+
+<body>
+  <h1>Lista de Aplicaciones:</h1>
+
+  <!-- Filters -->
+  <label for="appNameFilter">Filtrar por Nombre:</label>
+  <input type="text" id="appNameFilter">
+  <button onclick="filterByName()">Filtrar</button>
+
+  <button onclick="orderByVersion()">Ordenar por Versión</button>
+
+  <br><br>
+
+  <!-- Lista de Aplicaciones -->
+  <table border=1>
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Version</th>
+        <th>Descarga</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for app in apps %}
+      <tr>
+        <td>{{ app.name }}</td>
+        <td>{{ app.version }} ({{ app.build }})</td>
+        <td><a href="{{ app.url }}">descargar</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <br>
+
+  <a href="{{ url_for('upload') }}">Subir aplicación...</a>
+</body>
+
+</html>

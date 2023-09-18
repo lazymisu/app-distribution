@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App Distribution</title>
+</head>
+
+<body>
+  <h1>Subir una Aplicación</h1>
+  <form action="/api/upload" method="post" enctype="multipart/form-data">
+
+    <label for="appName">Nombre de la Aplicación:</label>
+    <input type="text" id="appName" name="appName" required><br><br>
+
+    <label for="appVersion">Versión:</label>
+    <input type="text" id="appVersion" name="appVersion" required><br><br>
+
+    <label for="appFiles">Archivos:</label>
+    <input type="file" id="appFiles" name="appFiles" accept=".apk, .ipa, .plist, .jpg, .png" multiple required><br><br>
+
+    <input type="hidden" id="appId" name="appId" value="{{ metadata.appId }}" required>
+
+    <input type="submit" value="Subir Aplicación">
+  </form>
+
+  <br>
+
+  <table border="1">
+    <tr>
+      <th colspan="2">Metadata</th>
+    </tr>
+    <tr>
+      <th>AppUrl</th>
+      <td>{{ metadata.appUrl }}</td>
+    </tr>
+    <tr>
+      <th>ImageUrl</th>
+      <td>{{ metadata.imageUrl }}</td>
+    </tr>
+  </table>
+
+  <br>
+
+  <a href="{{ url_for('index') }}">Regresar...</a>
+</body>
+
+</html>

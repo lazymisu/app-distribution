@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import uuid
 import os
@@ -16,6 +16,18 @@ DEF_IOS_IMG = "ios.jpg"
 
 
 @application.route('/')
+def index():
+    apps = get_apps()
+    return render_template('index.html', apps=apps)
+
+
+@application.route('/upload')
+def upload():
+    metadata = get_metadata()
+    return render_template('upload.html', metadata=metadata)
+
+
+# @application.route('/api/apps')
 def get_apps():
     filterName = request.args.get('name', None)
     orderBy = request.args.get('orderBy', None)
@@ -45,23 +57,24 @@ def get_apps():
 
     conn.close()
 
-    return jsonify(apps)
+    # return jsonify(apps)
+    return apps
 
 
-@application.route('/metadata', methods=['GET'])
+# @application.route('/api/metadata', methods=['GET'])
 def get_metadata():
     bucket_uuid = str(uuid.uuid4())
     app_url = os.path.join(REPOSITORY_PATH, bucket_uuid)
     image_url = os.path.join(REPOSITORY_PATH, DEF_IOS_IMG)
 
-    return jsonify({
+    return {
         "appId": bucket_uuid,
         "appUrl": app_url,
         "imageUrl": image_url
-    })
+    }
 
 
-@application.route('/upload', methods=['POST'])
+@application.route('/api/upload', methods=['POST'])
 def upload_file():
     appName = request.form['appName']
     appVersion = request.form['appVersion']
