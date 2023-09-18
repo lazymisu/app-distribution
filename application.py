@@ -1,11 +1,15 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import uuid
 import os
 import boto3
 from botocore.exceptions import NoCredentialsError
-import sqlite3
+# import sqlite3
 
 application = Flask(__name__)
+
+# Configuración de CORS
+CORS(application)
 
 REPOSITORY_PATH = 'https://appdistribution.s3.amazonaws.com'
 DEF_IOS_IMG = "ios.jpg"
@@ -41,6 +45,7 @@ def upload_file():
         s3_client = boto3.client('s3')
         bucket_name = "appdistribution"
         object_url = ""
+        response = ""
 
         # Sube el archivo al bucket especificado
         for file in appFiles:
@@ -48,6 +53,7 @@ def upload_file():
             remote_path = f"{appId}/{file.filename}"
             s3_client.upload_fileobj(file, bucket_name, remote_path)
             object_url = f"https://{bucket_name}.s3.amazonaws.com/{remote_path}"
+            response = object_url
             print(f"Archivo {filename} subido exitosamente a {object_url}")
 
         # Guardar en la base de datos (SQLite)
@@ -59,16 +65,14 @@ def upload_file():
         # conn.close()
         # print("Se guardo en base de datos!!!")
 
-        return jsonify({"mensaje": object_url})
-
     except NoCredentialsError:
         response = "No se encontraron credenciales de AWS. Asegúrate de configurarlas correctamente."
-        return jsonify({"mensaje": response})
 
     except Exception as e:
         response = f"Error al subir el archivo a S3: {str(e)}"
-        return jsonify({"mensaje": response})
+
+    return jsonify({"mensaje": response})
 
 
-# if __name__ == '__main__':
-#     application.run(debug=True)
+if __name__ == '__main__':
+    application.run(debug=True)
