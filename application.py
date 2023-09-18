@@ -4,7 +4,7 @@ import uuid
 import os
 import boto3
 from botocore.exceptions import NoCredentialsError
-# import sqlite3
+import sqlite3
 
 application = Flask(__name__)
 
@@ -16,8 +16,36 @@ DEF_IOS_IMG = "ios.jpg"
 
 
 @application.route('/')
-def hello_world():
-    return 'Hello World!'
+def get_apps():
+    filterName = request.args.get('name', None)
+    orderBy = request.args.get('orderBy', None)
+
+    # Conectar a la base de datos
+    conn = sqlite3.connect('appdistribution.db')
+    cursor = conn.cursor()
+
+    if filterName:
+        cursor.execute(
+            "SELECT * FROM apps WHERE name LIKE ?", ('%' + filterName + '%',))
+    else:
+        cursor.execute("SELECT * FROM apps")
+
+    if orderBy == 'version':
+        cursor.execute("SELECT * FROM apps ORDER BY version ASC")
+
+    apps = []
+
+    for app in cursor.fetchall():
+        apps.append({
+            "name": app[1],
+            "version": app[2],
+            "build": app[3],
+            "url": get_download_url(app[4]),
+        })
+
+    conn.close()
+
+    return jsonify(apps)
 
 
 @application.route('/metadata', methods=['GET'])
@@ -44,26 +72,29 @@ def upload_file():
         # Inicializa el cliente de S3
         s3_client = boto3.client('s3')
         bucket_name = "appdistribution"
-        object_url = ""
         response = ""
 
         # Sube el archivo al bucket especificado
         for file in appFiles:
-            filename = file.filename
             remote_path = f"{appId}/{file.filename}"
             s3_client.upload_fileobj(file, bucket_name, remote_path)
-            object_url = f"https://{bucket_name}.s3.amazonaws.com/{remote_path}"
-            response = object_url
-            print(f"Archivo {filename} subido exitosamente a {object_url}")
+            response = f"https://{bucket_name}.s3.amazonaws.com/{remote_path}"
 
         # Guardar en la base de datos (SQLite)
-        # conn = sqlite3.connect('appdistribution.db')
-        # cursor = conn.cursor()
-        # cursor.execute("INSERT INTO apps (name, version, url) VALUES (?, ?, ?)",
-        #                (appName, appVersion, object_url))
-        # conn.commit()
-        # conn.close()
-        # print("Se guardo en base de datos!!!")
+        conn = sqlite3.connect('appdistribution.db')
+        cursor = conn.cursor()
+
+        # Consulta para contar las aplicaciones con el mismo nombre y versión
+        query = "SELECT COUNT(*) FROM apps WHERE name = ? AND version = ?"
+        cursor.execute(query, (appName, appVersion))
+        build = cursor.fetchone()[0] + 1
+
+        # Consulta para guardar aplicacion
+        query = "INSERT INTO apps (name, version, build, uuid) VALUES (?, ?, ?, ?)"
+        cursor.execute(query, (appName, appVersion, build, appId))
+
+        conn.commit()
+        conn.close()
 
     except NoCredentialsError:
         response = "No se encontraron credenciales de AWS. Asegúrate de configurarlas correctamente."
@@ -72,6 +103,37 @@ def upload_file():
         response = f"Error al subir el archivo a S3: {str(e)}"
 
     return jsonify({"mensaje": response})
+
+
+def get_download_url(uuid):
+    s3_client = boto3.client('s3')
+
+    response = s3_client.list_objects_v2(
+        Bucket="appdistribution",
+        Prefix=uuid
+    )
+
+    if 'Contents' in response:
+        for obj in response['Contents']:
+            object_key = obj['Key']
+
+            # Obtiene la extensión del archivo
+            extension = get_extension(object_key)
+            url = os.path.join(REPOSITORY_PATH, object_key)
+
+            # Comprueba si la extensión es .apk
+            if extension == 'apk':
+                return url
+            # Comprueba si la extensión es .ipa o .plist
+            elif extension in ('plist'):
+                return f"itms-services://?action=download-manifest&url={url}"
+    else:
+        print("La carpeta está vacía o no existe.")
+        return None
+
+
+def get_extension(filename):
+    return filename.split('.')[-1].lower()
 
 
 if __name__ == '__main__':
